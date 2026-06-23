@@ -5,6 +5,12 @@ A codebase for the examples used in the AWS course for freeCodeCamp.
 
 This repository includes a `setup.yml` file and a `bin/` folder with install scripts for AWS tooling.
 
+### Repository structure
+
+- `bin/` — install and setup scripts for AWS tooling
+- `vpc/` — VPC example files and scripts
+  - `vpc/basics/` — basic VPC sample scripts
+
 ### Install scripts
 
 - `bin/aws_cli_install.sh` — installs AWS CLI v2 and enables `cli_auto_prompt` mode
