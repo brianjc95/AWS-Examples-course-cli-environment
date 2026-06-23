@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -e
+
+#Create our vpc
+VPC_ID=$(aws ec2 create-vpc \
+  --cidr-block "172.1.0.0/16" \
+  --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=My-VPC3}]' \
+  --region us-east-1 \
+  --query Vpc.VpcId \
+  --output text)
+
+echo "VPC ID: $VPC_ID"
+
+#turn on dns hostnames
+aws ec2 modify-vpc-attribute --region us-east-1 --vpc-id "$VPC_ID" --enable-dns-support "{\"Value\":true}"
+aws ec2 modify-vpc-attribute --region us-east-1 --vpc-id "$VPC_ID" --enable-dns-hostnames "{\"Value\":true}" 
+
+
+#create an IGW
+IGW_ID=$(aws ec2 create-internet-gateway \
+  --region us-east-1 \
+  --query InternetGateway.InternetGatewayId \
+  --output text
+)
+
+
+echo "IGW ID: $IGW_ID"
+
+#attach an IGW
+aws ec2 attach-internet-gateway --region us-east-1 --internet-gateway-id "$IGW_ID" --vpc-id "$VPC_ID"
+
+#create a new subnet
+
+SUBNET_ID=$(aws ec2 create-subnet \
+  --region us-east-1 \
+  --vpc-id "$VPC_ID" \
+  --cidr-block "172.1.0.0/20" \
+  --query Subnet.SubnetId \
+  --output text)
+
+echo "Subnet ID: $SUBNET_ID"
+
+## Auto assgn ipv4
+aws ec2 modify-subnet-attribute \
+  --region us-east-1 \
+  --subnet-id "$SUBNET_ID" \
+  --map-public-ip-on-launch
+
+#create a custom route table for this subnet
+RT_ID=$(aws ec2 create-route-table \
+  --region us-east-1 \
+  --vpc-id "$VPC_ID" \
+  --query RouteTable.RouteTableId \
+  --output text)
+
+echo "Route Table ID: $RT_ID"
+
+ASSOC_ID=$(aws ec2 associate-route-table \
+  --region us-east-1 \
+  --route-table-id "$RT_ID" \
+  --subnet-id "$SUBNET_ID" \
+  --query AssociationId \
+  --output text)
+
+echo "Association ID: $ASSOC_ID"
+
+#add a route for our route table to the IGW
+
+aws ec2 create-route \
+  --region us-east-1 \
+  --route-table-id "$RT_ID" \
+  --destination-cidr-block 0.0.0.0/0 \
+  --gateway-id "$IGW_ID"
+
+#print delete command
+echo "To delete the VPC, run the following command:"
+echo "./delete_vpc $VPC_ID $IGW_ID $SUBNET_ID $ASSOC_ID $RT_ID"
