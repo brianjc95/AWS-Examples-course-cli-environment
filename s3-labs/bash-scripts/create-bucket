@@ -12,6 +12,9 @@ BUCKET_NAME=$1
 # https://docs.aws.amazon.com/cli/latest/reference/s3api/create-bucket.html
 aws s3api create-bucket \
 --bucket $BUCKET_NAME \
---create-bucket-configuration="LocationConstraint=us-east-1" \
+#--create-bucket-configuration="LocationConstraint=ca-central-1" \
 --query Location \
 --output text
+
+##LocationConstraint note
+##If creating outside of us-east1 it needs to be specified. otherwise it is the default
